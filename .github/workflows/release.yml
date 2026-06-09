@@ -3,10 +3,10 @@ name: Release
 on:
   push:
     branches: [main, master]
-    tags: ['v*']
 
 jobs:
   build:
+    if: startsWith(github.event.head_commit.message, 'feat: v')
     runs-on: ubuntu-latest
 
     steps:
@@ -27,19 +27,30 @@ jobs:
           google-chrome --pack-extension="${PWD}" \
             --pack-extension-key="${PWD}/key.pem" \
             --no-message-box 2>/dev/null || true
-          # Chrome outputs the .crx one level up from the extension dir
           if [ -f ../love-sprinkle.crx ]; then
             mv ../love-sprinkle.crx ./love-sprinkle.crx
           fi
           ls -lh love-sprinkle.crx love-sprinkle.zip
 
+      - name: Create tag
+        id: tag
+        run: |
+          VERSION=$(echo "${{ github.event.head_commit.message }}" | grep -oP 'feat:\s*\Kv[\d.]+')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Tagging $VERSION"
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git tag "$VERSION"
+          git push origin "$VERSION"
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.tag.outputs.version }}
           files: |
             love-sprinkle.zip
             love-sprinkle.crx
-          prerelease: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+          prerelease: false
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
