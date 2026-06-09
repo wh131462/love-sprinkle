@@ -12,23 +12,36 @@ on:
 
 jobs:
   build:
-    if: ${{ github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'feat: v') }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Generate extension key
+      - name: Check release trigger
+        id: check
         run: |
-          openssl genrsa -out key.pem 2048
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          elif echo "${{ github.event.head_commit.message }}" | grep -q '^feat: v'; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            echo "Skipped: commit message does not match 'feat: v*'"
+          fi
+
+      - name: Generate extension key
+        if: steps.check.outputs.should_run == 'true'
+        run: openssl genrsa -out key.pem 2048
 
       - name: Package ZIP
+        if: steps.check.outputs.should_run == 'true'
         run: |
           zip -r love-sprinkle.zip . \
             -x ".git/*" ".github/*" "scripts/gen_icons.py" "key.pem"
 
       - name: Package CRX
+        if: steps.check.outputs.should_run == 'true'
         run: |
           google-chrome --pack-extension="${PWD}" \
             --pack-extension-key="${PWD}/key.pem" \
@@ -39,6 +52,7 @@ jobs:
           ls -lh love-sprinkle.crx love-sprinkle.zip
 
       - name: Set version
+        if: steps.check.outputs.should_run == 'true'
         id: tag
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -50,7 +64,6 @@ jobs:
           echo "Using version $VERSION"
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          # Only push new tag if it doesn't exist yet
           if ! git rev-parse "$VERSION" >/dev/null 2>&1; then
             git tag "$VERSION"
             git push origin "$VERSION"
@@ -59,6 +72,7 @@ jobs:
           fi
 
       - name: Release
+        if: steps.check.outputs.should_run == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.version }}
