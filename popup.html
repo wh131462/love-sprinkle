@@ -8,54 +8,78 @@
   body {
     width: 270px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: radial-gradient(ellipse at 50% 20%, #1e1335 0%, #0f0c22 70%);
     color: #e0d0e8;
-    overflow: hidden;
     user-select: none;
+    /* Layered background: deep gradient + subtle noise texture via radial overlay */
+    background:
+      radial-gradient(ellipse 120% 80% at 50% 0%, rgba(180,100,150,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 100%, #0a0818 0%, #110e22 50%, #0f0c20 100%);
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
   }
 
-  /* ========================================
-     HEADER — Beautiful layered heart
-     ======================================== */
+  /* ================================================================
+     HEADER
+     ================================================================ */
+
   .header {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 26px 20px 8px;
+    padding: 28px 20px 10px;
     position: relative;
   }
 
   .heart-stage {
     position: relative;
-    width: 72px; height: 72px;
-    margin-bottom: 10px;
+    width: 80px; height: 80px;
+    margin-bottom: 12px;
+    filter: drop-shadow(0 8px 24px rgba(200, 50, 80, 0.15));
   }
 
-  /* --- Glow ring behind heart --- */
+  /* --- Glow layers --- */
   .heart-glow {
     position: absolute;
-    inset: -12px;
+    inset: -16px;
   }
 
-  .heart-glow svg {
-    width: 100%; height: 100%;
-  }
+  .heart-glow svg { width: 100%; height: 100%; }
 
-  .glow-path {
+  /* Outer glow ring */
+  .glow-outer {
     fill: none;
-    stroke: rgba(255, 90, 120, 0.18);
-    stroke-width: 3;
-    filter: blur(6px);
+    stroke: rgba(255, 80, 110, 0.08);
+    stroke-width: 6;
+    filter: blur(8px);
   }
 
-  .heart-stage.active .glow-path {
-    stroke: rgba(255, 80, 110, 0.35);
-    animation: glow-pulse 1.5s ease-in-out infinite;
+  .heart-stage.active .glow-outer {
+    stroke: rgba(255, 80, 110, 0.25);
+    animation: glow-outer-pulse 2s ease-in-out infinite;
   }
 
-  @keyframes glow-pulse {
-    0%, 100% { stroke: rgba(255, 80, 110, 0.25); stroke-width: 3; }
-    50%      { stroke: rgba(255, 80, 110, 0.60); stroke-width: 5; }
+  @keyframes glow-outer-pulse {
+    0%, 100% { stroke: rgba(255, 80, 110, 0.15); stroke-width: 6; }
+    50%      { stroke: rgba(255, 80, 110, 0.40); stroke-width: 8; }
+  }
+
+  /* Inner glow ring */
+  .glow-inner {
+    fill: none;
+    stroke: rgba(255, 100, 130, 0.25);
+    stroke-width: 2;
+    filter: blur(3px);
+  }
+
+  .heart-stage.active .glow-inner {
+    stroke: rgba(255, 100, 130, 0.50);
+    animation: glow-inner-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes glow-inner-pulse {
+    0%, 100% { stroke: rgba(255, 100, 130, 0.35); stroke-width: 2; }
+    50%      { stroke: rgba(255, 100, 130, 0.70); stroke-width: 3; }
   }
 
   /* --- Main heart --- */
@@ -64,15 +88,9 @@
     inset: 0;
   }
 
-  .heart-main svg {
-    width: 100%; height: 100%;
-  }
+  .heart-main svg { width: 100%; height: 100%; }
 
   .heart-fill {
-    fill: url(#heart-grad);
-  }
-
-  .heart-stage.active .heart-fill {
     fill: url(#heart-grad-active);
   }
 
@@ -80,35 +98,34 @@
     fill: url(#heart-grad-paused);
   }
 
-  /* Heart outline */
   .heart-outline {
     fill: none;
-    stroke-width: 1.5;
+    stroke-width: 1.2;
   }
 
   .heart-stage.active .heart-outline {
-    stroke: rgba(255, 140, 160, 0.3);
+    stroke: rgba(255, 160, 180, 0.35);
   }
 
   .heart-stage.paused .heart-outline {
-    stroke: rgba(140, 130, 155, 0.2);
+    stroke: rgba(150, 140, 165, 0.2);
   }
 
-  /* ====== Heartbeat animation ====== */
+  /* Heartbeat */
   @keyframes heartbeat {
     0%   { transform: scale(1); }
-    12%  { transform: scale(1.12); }
+    12%  { transform: scale(1.1); }
     24%  { transform: scale(1); }
-    36%  { transform: scale(1.07); }
+    36%  { transform: scale(1.06); }
     48%  { transform: scale(1); }
     100% { transform: scale(1); }
   }
 
   .heart-stage.active .heart-main {
-    animation: heartbeat 1.5s ease-in-out infinite;
+    animation: heartbeat 1.6s ease-in-out infinite;
   }
 
-  /* ====== Orbiting sparkles ====== */
+  /* --- Sparkles --- */
   .sparkle {
     position: absolute;
     width: 5px; height: 5px;
@@ -119,16 +136,16 @@
     display: block;
     width: 100%; height: 100%;
     border-radius: 50%;
-    background: #ffb0c0;
-    box-shadow: 0 0 5px 1px rgba(255, 150, 180, 0.7);
+    background: #ffb8c8;
+    box-shadow: 0 0 6px 1.5px rgba(255, 140, 170, 0.8);
   }
 
-  .sparkle.s1 { top: -4px;  left: 50%; margin-left: -2.5px; }
-  .sparkle.s2 { top: 50%;  right: -4px; margin-top: -2.5px; }
-  .sparkle.s3 { bottom: -4px; left: 50%; margin-left: -2.5px; }
-  .sparkle.s4 { top: 50%;  left: -4px; margin-top: -2.5px; }
-  .sparkle.s5 { top: 10%;  right: 5%; }
-  .sparkle.s6 { bottom: 8%; left: 8%; }
+  .sparkle.s1 { top: -6px;  left: 50%; margin-left: -3px; }
+  .sparkle.s2 { top: 50%;  right: -6px; margin-top: -3px; }
+  .sparkle.s3 { bottom: -6px; left: 50%; margin-left: -3px; }
+  .sparkle.s4 { top: 50%;  left: -6px; margin-top: -3px; }
+  .sparkle.s5 { top: 8%;   right: 6%; }
+  .sparkle.s6 { bottom: 10%; left: 10%; }
 
   .heart-stage.active .sparkle::before {
     animation: sparkle-flicker 2s ease-in-out infinite;
@@ -142,81 +159,50 @@
   .heart-stage.active .sparkle.s6::before { animation-delay: 0.6s; }
 
   @keyframes sparkle-flicker {
-    0%, 100% { opacity: 0; transform: scale(0.5); }
+    0%, 100% { opacity: 0; transform: scale(0.4); }
     50%      { opacity: 1; transform: scale(1.3); }
   }
 
-  /* ====== Title ====== */
+  /* --- Title --- */
   .title {
     font-size: 15px;
     font-weight: 600;
-    letter-spacing: 1.2px;
-    color: #d4b8e8;
+    letter-spacing: 1.5px;
+    color: #d4bce4;
   }
 
-  /* ========================================
-     BACKGROUND PARTICLES
-     ======================================== */
-  .particles {
-    position: absolute; inset: 0;
-    pointer-events: none; overflow: hidden;
-  }
-
-  .particle {
-    position: absolute;
-    width: 3px; height: 3px;
-    border-radius: 50%;
-    background: rgba(255, 150, 180, 0.45);
-    animation: float-up 3.2s ease-in infinite;
-    opacity: 0;
-  }
-
-  .particle:nth-child(1) { left: 15%; animation-delay: 0s; }
-  .particle:nth-child(2) { left: 35%; animation-delay: 0.6s; }
-  .particle:nth-child(3) { left: 55%; animation-delay: 1.2s; }
-  .particle:nth-child(4) { left: 72%; animation-delay: 0.3s; }
-  .particle:nth-child(5) { left: 85%; animation-delay: 0.9s; }
-  .particle:nth-child(6) { left: 45%; animation-delay: 1.6s; }
-  .particle:nth-child(7) { left: 25%; animation-delay: 1.9s; }
-  .particle:nth-child(8) { left: 62%; animation-delay: 0.15s; }
-
-  @keyframes float-up {
-    0%   { transform: translateY(70px) scale(0); opacity: 0; }
-    25%  { opacity: 0.5; }
-    55%  { opacity: 0.25; }
-    100% { transform: translateY(-15px) scale(1.3); opacity: 0; }
-  }
-
-  /* ========================================
+  /* ================================================================
      DIVIDER
-     ======================================== */
+     ================================================================ */
+
   .divider {
-    height: 1px; margin: 0 22px;
-    background: linear-gradient(90deg, transparent, rgba(180, 130, 200, 0.18), transparent);
+    height: 1px; margin: 0 24px;
+    background: linear-gradient(90deg, transparent, rgba(180, 130, 200, 0.16), transparent);
   }
 
-  /* ========================================
-     TOGGLE ROW
-     ======================================== */
+  /* ================================================================
+     TOGGLE
+     ================================================================ */
+
   .toggle-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 22px 6px;
+    padding: 16px 24px 8px;
   }
 
   .toggle-label {
     font-size: 13px; font-weight: 500;
-    color: #c0a8d4;
+    color: #b8a0cc;
     transition: color 0.3s;
   }
 
-  .toggle-label.active { color: #ff8aa0; }
+  .toggle-label.active { color: #ff90a4; }
 
   .toggle-wrap {
     position: relative;
-    width: 48px; height: 26px;
-    flex-shrink: 0; margin: 0 10px;
+    width: 50px; height: 28px;
+    flex-shrink: 0; margin: 0 12px;
   }
 
   .toggle-wrap input {
@@ -225,25 +211,27 @@
 
   .toggle-slider {
     position: absolute; inset: 0;
-    background: #3a2e48; border-radius: 13px;
+    background: #352a44;
+    border-radius: 14px;
     cursor: pointer;
     transition: background 0.35s, box-shadow 0.35s;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
   }
 
   .toggle-slider::before {
     content: '';
     position: absolute;
-    width: 20px; height: 20px;
+    width: 22px; height: 22px;
     left: 3px; top: 3px;
-    background: #f0e0f4; border-radius: 50%;
-    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), background 0.3s;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    background: #ece0f2;
+    border-radius: 50%;
+    transition: transform 0.32s cubic-bezier(0.34,1.56,0.64,1), background 0.3s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
   }
 
   input:checked + .toggle-slider {
     background: linear-gradient(135deg, #ff4d6a, #ff6b81);
-    box-shadow: 0 0 14px rgba(255,77,106,0.35), inset 0 1px 2px rgba(255,255,255,0.15);
+    box-shadow: 0 0 16px rgba(255,77,106,0.4), inset 0 1px 2px rgba(255,255,255,0.12);
   }
 
   input:checked + .toggle-slider::before {
@@ -251,40 +239,44 @@
     background: #fff;
   }
 
-  /* ========================================
+  /* ================================================================
      SLIDERS
-     ======================================== */
+     ================================================================ */
+
   .sliders {
-    padding: 6px 22px 10px;
+    padding: 10px 24px 12px;
   }
 
   .slider-group {
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
 
   .slider-label {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
   }
 
   .slider-label span:first-child {
-    font-size: 12px; color: #a890c0;
+    font-size: 12px;
+    color: #a088c0;
+    font-weight: 500;
   }
 
   .slider-label span:last-child {
-    font-size: 11px; min-width: 32px; text-align: right;
-    padding: 1px 6px;
-    border-radius: 6px;
-    background: rgba(255,255,255,0.04);
-    color: #c0a0d4;
+    font-size: 10.5px; min-width: 34px; text-align: center;
+    padding: 2px 7px;
+    border-radius: 7px;
+    background: rgba(255,255,255,0.03);
+    color: #b898d0;
+    font-weight: 500;
     transition: color 0.3s, background 0.3s;
   }
 
   .slider-label span.hot {
     color: #ff8aa0;
-    background: rgba(255,77,106,0.12);
+    background: rgba(255,77,106,0.15);
   }
 
   input[type="range"] {
@@ -293,115 +285,126 @@
     width: 100%;
     height: 6px;
     border-radius: 3px;
-    background: #2a2040;
     outline: none;
-    transition: background 0.3s;
+    cursor: pointer;
+    transition: background 0.2s;
   }
+
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 3px;
+  }
+
+  /* Track fill effect handled by JS inline style */
 
   input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 16px; height: 16px;
+    width: 18px; height: 18px;
     border-radius: 50%;
     background: #c0a0d0;
     cursor: pointer;
-    box-shadow: 0 0 6px rgba(180,140,200,0.3);
+    box-shadow: 0 0 8px rgba(180,140,200,0.35);
+    margin-top: -6px;
     transition: background 0.3s, box-shadow 0.3s, transform 0.15s;
   }
 
   input[type="range"]::-webkit-slider-thumb:active {
-    transform: scale(1.2);
+    transform: scale(1.15);
   }
 
   input[type="range"]:disabled {
-    opacity: 0.35;
+    opacity: 0.3;
     pointer-events: none;
   }
 
   .enabled-range::-webkit-slider-thumb {
     background: #ff6b81;
-    box-shadow: 0 0 10px rgba(255,107,129,0.5);
+    box-shadow: 0 0 12px rgba(255,107,129,0.55);
   }
 
-  /* ========================================
+  /* ================================================================
      STATUS
-     ======================================== */
+     ================================================================ */
+
   .status-bar {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 5px 0 3px;
+    gap: 5px;
+    padding: 8px 0 4px;
   }
 
   .status-dot {
     width: 5px; height: 5px;
     border-radius: 50%;
-    background: #3a2e48;
+    background: #352a44;
     transition: background 0.3s, box-shadow 0.3s;
   }
 
   .status-dot.lit {
     background: #ff6b81;
-    box-shadow: 0 0 5px rgba(255,107,129,0.6);
+    box-shadow: 0 0 6px rgba(255,107,129,0.6);
     animation: dot-pulse 1.4s ease-in-out infinite;
   }
 
   .status-dot.lit:nth-child(2) { animation-delay: 0.15s; }
-  .status-dot.lit:nth-child(3) { animation-delay: 0.3s; }
+  .status-dot.lit:nth-child(3) { animation-delay: 0.30s; }
   .status-dot.lit:nth-child(4) { animation-delay: 0.45s; }
-  .status-dot.lit:nth-child(5) { animation-delay: 0.6s; }
+  .status-dot.lit:nth-child(5) { animation-delay: 0.60s; }
   .status-dot.lit:nth-child(6) { animation-delay: 0.75s; }
-  .status-dot.lit:nth-child(7) { animation-delay: 0.9s; }
+  .status-dot.lit:nth-child(7) { animation-delay: 0.90s; }
 
   @keyframes dot-pulse {
-    0%,100% { opacity: 0.3; transform: scale(0.8); }
-    50%     { opacity: 1;   transform: scale(1.2); }
+    0%, 100% { opacity: 0.3; transform: scale(0.75); }
+    50%      { opacity: 1;   transform: scale(1.25); }
   }
 
   .status-text {
-    font-size: 11px; color: #706080;
+    font-size: 11px; color: #685878;
     text-align: center;
-    padding: 0 0 16px;
-    letter-spacing: 0.5px;
+    padding: 0 0 18px;
+    letter-spacing: 0.6px;
     transition: color 0.3s;
+    font-weight: 500;
   }
 
-  .status-text.active { color: #c090b0; }
+  .status-text.active { color: #b890c0; }
 </style>
 </head>
 <body>
 
-<!-- ====== SVG Definitions ====== -->
+<!-- SVG defs -->
 <svg width="0" height="0" style="position:absolute">
   <defs>
-    <!-- Active gradient: rich pink to coral -->
-    <linearGradient id="heart-grad-active" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="heart-grad-active" x1="10%" y1="5%" x2="90%" y2="95%">
       <stop offset="0%"   stop-color="#ff5e78"/>
-      <stop offset="45%"  stop-color="#e8456a"/>
-      <stop offset="100%" stop-color="#c73058"/>
+      <stop offset="40%"  stop-color="#e64568"/>
+      <stop offset="100%" stop-color="#c42e54"/>
     </linearGradient>
-    <!-- Paused gradient: desaturated -->
-    <linearGradient id="heart-grad-paused" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%"   stop-color="#5a4e68"/>
-      <stop offset="50%"  stop-color="#4a4058"/>
+
+    <linearGradient id="heart-grad-paused" x1="10%" y1="5%" x2="90%" y2="95%">
+      <stop offset="0%"   stop-color="#595068"/>
+      <stop offset="50%"  stop-color="#4a405a"/>
       <stop offset="100%" stop-color="#3a3048"/>
     </linearGradient>
-    <!-- Blur filter for glow -->
-    <filter id="blur-glow">
-      <feGaussianBlur stdDeviation="4"/>
+
+    <filter id="blur-outer">
+      <feGaussianBlur stdDeviation="6"/>
     </filter>
 
-    <!-- Heart path (32x32 viewBox) -->
+    <filter id="blur-inner">
+      <feGaussianBlur stdDeviation="2.5"/>
+    </filter>
+
     <path id="heart-path"
       d="M16 27 C8 19.5, 2.5 14, 2.5 9 C2.5 5.2, 5.5 2.5, 9 2.5
          C11.5 2.5, 13.8 4, 16 7 C18.2 4, 20.5 2.5, 23 2.5
          C26.5 2.5, 29.5 5.2, 29.5 9 C29.5 14, 24 19.5, 16 27Z" />
-
   </defs>
 </svg>
 
-<!-- ====== Background Particles ====== -->
+<!-- Background particles -->
 <div class="particles" id="particles">
   <div class="particle"></div><div class="particle"></div>
   <div class="particle"></div><div class="particle"></div>
@@ -409,22 +412,29 @@
   <div class="particle"></div><div class="particle"></div>
 </div>
 
-<!-- ====== Header ====== -->
+<!-- Header -->
 <div class="header">
   <div class="heart-stage active" id="heartStage">
 
-    <!-- Glow ring -->
+    <!-- Outer glow -->
     <div class="heart-glow">
       <svg viewBox="0 0 32 32">
-        <use href="#heart-path" class="glow-path" filter="url(#blur-glow)" />
+        <use href="#heart-path" class="glow-outer" filter="url(#blur-outer)"/>
+      </svg>
+    </div>
+
+    <!-- Inner glow -->
+    <div class="heart-glow">
+      <svg viewBox="0 0 32 32">
+        <use href="#heart-path" class="glow-inner" filter="url(#blur-inner)"/>
       </svg>
     </div>
 
     <!-- Main heart -->
     <div class="heart-main">
       <svg viewBox="0 0 32 32">
-        <use href="#heart-path" class="heart-outline" />
-        <use href="#heart-path" class="heart-fill" />
+        <use href="#heart-path" class="heart-outline"/>
+        <use href="#heart-path" class="heart-fill"/>
       </svg>
     </div>
 
@@ -442,7 +452,7 @@
 
 <div class="divider"></div>
 
-<!-- ====== Toggle ====== -->
+<!-- Toggle -->
 <div class="toggle-row">
   <span class="toggle-label" id="labelOff">暂停</span>
   <label class="toggle-wrap" for="toggle">
@@ -454,7 +464,7 @@
 
 <div class="divider"></div>
 
-<!-- ====== Sliders ====== -->
+<!-- Sliders -->
 <div class="sliders">
   <div class="slider-group">
     <div class="slider-label">
@@ -472,7 +482,7 @@
   </div>
 </div>
 
-<!-- ====== Status ====== -->
+<!-- Status -->
 <div class="status-bar" id="statusDots">
   <div class="status-dot lit"></div>
   <div class="status-dot lit"></div>

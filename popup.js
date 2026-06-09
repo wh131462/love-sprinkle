@@ -33,7 +33,20 @@ const DEFAULTS = {
 };
 
 /* ================================================================
-   Helpers
+   Slider track fill
+   ================================================================ */
+
+function trackFill(slider, activeColor, idleColor) {
+  const v = Number(slider.value);
+  const min = Number(slider.min) || 1;
+  const max = Number(slider.max) || 10;
+  const pct = ((v - min) / (max - min)) * 100;
+  slider.style.background =
+    `linear-gradient(to right, ${activeColor} ${pct}%, ${idleColor} ${pct}%)`;
+}
+
+/* ================================================================
+   Label helpers
    ================================================================ */
 
 function updateFreqLabel(v) {
@@ -56,7 +69,7 @@ function refreshUI(enabled, freq, dens) {
   // 爱心动画状态
   heartStage.className = `heart-stage ${enabled ? 'active' : 'paused'}`;
 
-  // 背景粒子
+  // 背景粒子（使用 opacity 过渡）
   particles.style.opacity = enabled ? '1' : '0';
 
   // 开关标签
@@ -73,6 +86,12 @@ function refreshUI(enabled, freq, dens) {
   densSlider.value = dens;
   updateFreqLabel(freq);
   updateDensLabel(dens);
+
+  // 滑块轨道填充
+  const fill = enabled ? '#ff6b81' : '#3a2e48';
+  const base = enabled ? '#2a2040' : '#1a1530';
+  trackFill(freqSlider, fill, base);
+  trackFill(densSlider, fill, base);
 
   // 呼吸灯点
   const dots = statusDots.querySelectorAll('.status-dot');
@@ -107,7 +126,6 @@ function loadAndRefresh() {
 toggle.addEventListener('change', () => {
   const enabled = toggle.checked;
   chrome.storage.local.set({ enabled }, () => {
-    // set 回调中重新读取以拿到频率/密度用于 UI
     chrome.storage.local.get(['frequency', 'density'], (data) => {
       refreshUI(enabled, data.frequency || DEFAULTS.frequency, data.density || DEFAULTS.density);
     });
@@ -116,7 +134,9 @@ toggle.addEventListener('change', () => {
 
 // 频率滑块
 freqSlider.addEventListener('input', () => {
-  updateFreqLabel(Number(freqSlider.value));
+  const v = Number(freqSlider.value);
+  updateFreqLabel(v);
+  trackFill(freqSlider, '#ff6b81', '#2a2040');
 });
 
 freqSlider.addEventListener('change', () => {
@@ -125,7 +145,9 @@ freqSlider.addEventListener('change', () => {
 
 // 密度滑块
 densSlider.addEventListener('input', () => {
-  updateDensLabel(Number(densSlider.value));
+  const v = Number(densSlider.value);
+  updateDensLabel(v);
+  trackFill(densSlider, '#ff6b81', '#2a2040');
 });
 
 densSlider.addEventListener('change', () => {
