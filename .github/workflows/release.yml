@@ -43,13 +43,19 @@ jobs:
       - name: Package CRX
         if: steps.check.outputs.should_run == 'true'
         run: |
-          google-chrome --pack-extension="${PWD}" \
+          xvfb-run google-chrome \
+            --pack-extension="${PWD}" \
             --pack-extension-key="${PWD}/key.pem" \
-            --no-message-box 2>/dev/null || true
-          if [ -f ../love-sprinkle.crx ]; then
-            mv ../love-sprinkle.crx ./love-sprinkle.crx
+            --no-message-box
+          # Chrome outputs .crx to parent dir, named after the extension dir
+          CRX_PATH="$(dirname "${PWD}")/$(basename "${PWD}").crx"
+          if [ -f "$CRX_PATH" ]; then
+            mv "$CRX_PATH" ./love-sprinkle.crx
+            echo "CRX created: $(ls -lh love-sprinkle.crx)"
+          else
+            echo "WARNING: CRX not found at $CRX_PATH, falling back to zip only"
           fi
-          ls -lh love-sprinkle.crx love-sprinkle.zip
+          ls -lh love-sprinkle.zip
 
       - name: Set version
         if: steps.check.outputs.should_run == 'true'
@@ -79,6 +85,7 @@ jobs:
           files: |
             love-sprinkle.zip
             love-sprinkle.crx
+          fail_on_unmatched_files: false
           prerelease: false
           generate_release_notes: true
         env:
