@@ -32,20 +32,20 @@ jobs:
 
       - name: Generate extension key
         if: steps.check.outputs.should_run == 'true'
-        run: openssl genrsa -out key.pem 2048
+        run: openssl genrsa -out /tmp/key.pem 2048
 
       - name: Package ZIP
         if: steps.check.outputs.should_run == 'true'
         run: |
           zip -r love-sprinkle.zip . \
-            -x ".git/*" ".github/*" "scripts/gen_icons.py" "key.pem"
+            -x ".git/*" ".github/*" "scripts/gen_icons.py"
 
       - name: Package CRX
         if: steps.check.outputs.should_run == 'true'
         run: |
           xvfb-run google-chrome \
             --pack-extension="${PWD}" \
-            --pack-extension-key="${PWD}/key.pem" \
+            --pack-extension-key=/tmp/key.pem \
             --no-message-box
           # Chrome outputs .crx to parent dir, named after the extension dir
           CRX_PATH="$(dirname "${PWD}")/$(basename "${PWD}").crx"
