@@ -37,50 +37,6 @@
     margin-bottom: 12px;
   }
 
-  /* --- Glow layers --- */
-  .heart-glow {
-    position: absolute;
-    inset: -16px;
-  }
-
-  .heart-glow svg { width: 100%; height: 100%; }
-
-  /* Outer glow ring */
-  .glow-outer {
-    fill: none;
-    stroke: rgba(255, 80, 110, 0.08);
-    stroke-width: 6;
-    filter: blur(8px);
-  }
-
-  .heart-stage.active .glow-outer {
-    stroke: rgba(255, 80, 110, 0.25);
-    animation: glow-outer-pulse 2s ease-in-out infinite;
-  }
-
-  @keyframes glow-outer-pulse {
-    0%, 100% { stroke: rgba(255, 80, 110, 0.15); stroke-width: 6; }
-    50%      { stroke: rgba(255, 80, 110, 0.40); stroke-width: 8; }
-  }
-
-  /* Inner glow ring */
-  .glow-inner {
-    fill: none;
-    stroke: rgba(255, 100, 130, 0.25);
-    stroke-width: 2;
-    filter: blur(3px);
-  }
-
-  .heart-stage.active .glow-inner {
-    stroke: rgba(255, 100, 130, 0.50);
-    animation: glow-inner-pulse 1.5s ease-in-out infinite;
-  }
-
-  @keyframes glow-inner-pulse {
-    0%, 100% { stroke: rgba(255, 100, 130, 0.35); stroke-width: 2; }
-    50%      { stroke: rgba(255, 100, 130, 0.70); stroke-width: 3; }
-  }
-
   /* --- Main heart --- */
   .heart-main {
     position: absolute;
@@ -88,6 +44,13 @@
   }
 
   .heart-main svg { width: 100%; height: 100%; }
+
+  /* CSS drop-shadow follows the heart's alpha channel — no square boundary */
+  .heart-stage.active .heart-main svg {
+    filter:
+      drop-shadow(0 0 8px rgba(255, 100, 130, 0.55))
+      drop-shadow(0 0 22px rgba(255, 80, 110, 0.30));
+  }
 
   .heart-fill {
     fill: url(#heart-grad-active);
@@ -388,14 +351,6 @@
       <stop offset="100%" stop-color="#3a3048"/>
     </linearGradient>
 
-    <filter id="blur-outer">
-      <feGaussianBlur stdDeviation="6"/>
-    </filter>
-
-    <filter id="blur-inner">
-      <feGaussianBlur stdDeviation="2.5"/>
-    </filter>
-
     <path id="heart-path"
       d="M16 27 C8 19.5, 2.5 14, 2.5 9 C2.5 5.2, 5.5 2.5, 9 2.5
          C11.5 2.5, 13.8 4, 16 7 C18.2 4, 20.5 2.5, 23 2.5
@@ -414,20 +369,6 @@
 <!-- Header -->
 <div class="header">
   <div class="heart-stage active" id="heartStage">
-
-    <!-- Outer glow -->
-    <div class="heart-glow">
-      <svg viewBox="0 0 32 32">
-        <use href="#heart-path" class="glow-outer" filter="url(#blur-outer)"/>
-      </svg>
-    </div>
-
-    <!-- Inner glow -->
-    <div class="heart-glow">
-      <svg viewBox="0 0 32 32">
-        <use href="#heart-path" class="glow-inner" filter="url(#blur-inner)"/>
-      </svg>
-    </div>
 
     <!-- Main heart -->
     <div class="heart-main">
