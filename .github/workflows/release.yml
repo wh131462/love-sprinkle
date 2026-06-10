@@ -65,5 +65,14 @@ jobs:
           files: love-sprinkle.zip
           prerelease: false
           generate_release_notes: true
+          body: |
+            ## 安装步骤
+            
+            1. 下载 `love-sprinkle.zip` 并解压
+            2. 打开 Chrome，访问 `chrome://extensions/`
+            3. 开启右上角 **「开发者模式」**
+            4. 点击 **「加载已解压的扩展程序」**
+            5. 选择解压后的 `love-sprinkle` 文件夹
+            6. 完成！打开任意网页即可看到爱心飘洒
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
