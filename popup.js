@@ -1,6 +1,6 @@
 /**
  * Heart Overflow — Popup Controller
- * 负责 popup 面板的 UI 渲染与 chrome.storage 双向同步。
+ * 按域名独立控制爱心启停，默认关闭。
  */
 
 /* ================================================================
@@ -27,10 +27,16 @@ const FREQ_LABELS = ['极慢', '慢', '较慢', '偏慢', '中', '偏快', '较�
 const DENS_LABELS = ['1x', '2x', '3x', '4x', '5x', '6x'];
 
 const DEFAULTS = {
-  enabled: true,
+  enabled: false,   // 默认关闭
   frequency: 5,
   density: 1,
 };
+
+/* ================================================================
+   Per-site state
+   ================================================================ */
+
+let enabledKey = null;  // 'enabled_<hostname>'
 
 /* ================================================================
    Slider track fill
@@ -66,17 +72,12 @@ function updateDensLabel(v) {
 function refreshUI(enabled, freq, dens) {
   toggle.checked = enabled;
 
-  // 爱心动画状态
   heartStage.className = `heart-stage ${enabled ? 'active' : 'paused'}`;
-
-  // 背景粒子（使用 opacity 过渡）
   particles.style.opacity = enabled ? '1' : '0';
 
-  // 开关标签
   labelOn.classList.toggle('active', enabled);
   labelOff.classList.toggle('active', !enabled);
 
-  // 滑块
   freqSlider.disabled = !enabled;
   densSlider.disabled = !enabled;
   freqSlider.className = enabled ? 'enabled-range' : '';
@@ -87,31 +88,30 @@ function refreshUI(enabled, freq, dens) {
   updateFreqLabel(freq);
   updateDensLabel(dens);
 
-  // 滑块轨道填充
   const fill = enabled ? '#ff6b81' : '#3a2e48';
   const base = enabled ? '#2a2040' : '#1a1530';
   trackFill(freqSlider, fill, base);
   trackFill(densSlider, fill, base);
 
-  // 呼吸灯点
   const dots = statusDots.querySelectorAll('.status-dot');
   dots.forEach((dot) => {
     dot.className = `status-dot${enabled ? ' lit' : ''}`;
   });
 
-  // 底部状态文字
   statusText.textContent = enabled ? '爱心正在扩散中...' : '扩散已暂停';
   statusText.classList.toggle('active', enabled);
 }
 
 /* ================================================================
-   chrome.storage sync
+   chrome.storage sync — per-site enabled, global frequency/density
    ================================================================ */
 
 function loadAndRefresh() {
-  chrome.storage.local.get(['enabled', 'frequency', 'density'], (data) => {
+  if (!enabledKey) return;
+
+  chrome.storage.local.get([enabledKey, 'frequency', 'density'], (data) => {
     refreshUI(
-      data.enabled   !== false,
+      data[enabledKey] === true,
       data.frequency || DEFAULTS.frequency,
       data.density   || DEFAULTS.density,
     );
@@ -119,43 +119,47 @@ function loadAndRefresh() {
 }
 
 /* ================================================================
-   Event listeners
+   Init — resolve hostname first, then wire everything
    ================================================================ */
 
-// 总开关
-toggle.addEventListener('change', () => {
-  const enabled = toggle.checked;
-  chrome.storage.local.set({ enabled }, () => {
-    chrome.storage.local.get(['frequency', 'density'], (data) => {
-      refreshUI(enabled, data.frequency || DEFAULTS.frequency, data.density || DEFAULTS.density);
+chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+  if (!tabs[0] || !tabs[0].url) return;
+
+  const host = new URL(tabs[0].url).hostname;
+  enabledKey = 'enabled_' + host;
+
+  // 现在加载并渲染 UI
+  loadAndRefresh();
+
+  // ===== 总开关 =====
+  toggle.addEventListener('change', () => {
+    const enabled = toggle.checked;
+    chrome.storage.local.set({ [enabledKey]: enabled }, () => {
+      chrome.storage.local.get(['frequency', 'density'], (data) => {
+        refreshUI(enabled, data.frequency || DEFAULTS.frequency, data.density || DEFAULTS.density);
+      });
     });
   });
+
+  // ===== 频率滑块 =====
+  freqSlider.addEventListener('input', () => {
+    const v = Number(freqSlider.value);
+    updateFreqLabel(v);
+    trackFill(freqSlider, '#ff6b81', '#2a2040');
+  });
+
+  freqSlider.addEventListener('change', () => {
+    chrome.storage.local.set({ frequency: Number(freqSlider.value) });
+  });
+
+  // ===== 密度滑块 =====
+  densSlider.addEventListener('input', () => {
+    const v = Number(densSlider.value);
+    updateDensLabel(v);
+    trackFill(densSlider, '#ff6b81', '#2a2040');
+  });
+
+  densSlider.addEventListener('change', () => {
+    chrome.storage.local.set({ density: Number(densSlider.value) });
+  });
 });
-
-// 频率滑块
-freqSlider.addEventListener('input', () => {
-  const v = Number(freqSlider.value);
-  updateFreqLabel(v);
-  trackFill(freqSlider, '#ff6b81', '#2a2040');
-});
-
-freqSlider.addEventListener('change', () => {
-  chrome.storage.local.set({ frequency: Number(freqSlider.value) });
-});
-
-// 密度滑块
-densSlider.addEventListener('input', () => {
-  const v = Number(densSlider.value);
-  updateDensLabel(v);
-  trackFill(densSlider, '#ff6b81', '#2a2040');
-});
-
-densSlider.addEventListener('change', () => {
-  chrome.storage.local.set({ density: Number(densSlider.value) });
-});
-
-/* ================================================================
-   Init
-   ================================================================ */
-
-loadAndRefresh();

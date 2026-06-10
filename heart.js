@@ -1,21 +1,23 @@
 /**
  * Heart Overflow — Content Script
- * 在网页上随机生成彩色心形 Canvas 动画，受 popup 面板控制。
+ * 在每个网页上独立控制爱心动画，默认关闭。
  */
 
 /* ================================================================
-   Configuration — synced with chrome.storage
+   Per-site state
    ================================================================ */
 
+const HOST = location.hostname;
+const ENABLED_KEY = 'enabled_' + HOST;
+
 let intervalId = null;
-let currentDelay = 150;   // 默认间隔 150ms
-let currentBatch = 1;     // 默认每次生成 1 颗
+let currentDelay = 150;
+let currentBatch = 1;
 
 /* ================================================================
    Heart rendering
    ================================================================ */
 
-/** 在页面上创建一颗随机大小、随机颜色、带缩放动画的爱心 */
 function createHeart() {
   const x = Math.random() * window.innerWidth;
   const y = Math.random() * window.innerHeight;
@@ -23,7 +25,6 @@ function createHeart() {
   const color = `hsl(${Math.random() * 360}, 80%, 60%)`;
   const rotation = (Math.random() - 0.5) * 40;
 
-  // 创建离屏 Canvas
   const canvas = document.createElement('canvas');
   canvas.width = size * 2;
   canvas.height = size * 2;
@@ -38,7 +39,6 @@ function createHeart() {
     'opacity: 0',
   ].join(';');
 
-  // 绘制心形路径（参数方程）
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = color;
   ctx.beginPath();
@@ -54,19 +54,16 @@ function createHeart() {
 
   document.body.appendChild(canvas);
 
-  // 弹入动画
   requestAnimationFrame(() => {
     canvas.style.transform = `scale(1.25) rotate(${rotation}deg)`;
     canvas.style.opacity = '0.9';
   });
 
-  // 淡出缩小
   setTimeout(() => {
     canvas.style.opacity = '0';
     canvas.style.transform = `scale(0.5) rotate(${rotation}deg)`;
   }, 1200);
 
-  // 清理 DOM
   setTimeout(() => canvas.remove(), 2000);
 }
 
@@ -74,7 +71,6 @@ function createHeart() {
    Batch spawning
    ================================================================ */
 
-/** 每轮按 currentBatch 生成指定数量的爱心 */
 function spawnBatch() {
   for (let i = 0; i < currentBatch; i++) {
     createHeart();
@@ -85,7 +81,6 @@ function spawnBatch() {
    Timer control
    ================================================================ */
 
-/** 以当前 currentDelay 重启 setInterval */
 function restartInterval() {
   if (intervalId) {
     clearInterval(intervalId);
@@ -110,36 +105,32 @@ function stopHearts() {
    Settings
    ================================================================ */
 
-/** 频率：滑块 1-10 → 间隔 239ms ~ 50ms */
 function applyFrequency(value) {
   currentDelay = 260 - value * 21;
 }
 
-/** 密度：滑块 1-6 → 每轮生成数 */
 function applyDensity(value) {
   currentBatch = value;
 }
 
 /* ================================================================
-   chrome.storage sync
+   chrome.storage sync — per-site enabled, global frequency/density
    ================================================================ */
 
-chrome.storage.local.get(['enabled', 'frequency', 'density'], (data) => {
+chrome.storage.local.get([ENABLED_KEY, 'frequency', 'density'], (data) => {
   if (data.frequency) applyFrequency(data.frequency);
   if (data.density)   applyDensity(data.density);
 
-  if (data.enabled !== false) {
+  // 默认关闭：只有当前域名被手动开启才启动
+  if (data[ENABLED_KEY] === true) {
     startHearts();
-    chrome.storage.local.set({ enabled: true });
   }
 });
 
 chrome.storage.onChanged.addListener((changes) => {
-  let needRestart = false;
-
-  // 启停
-  if (changes.enabled) {
-    if (changes.enabled.newValue) {
+  // 本域名启停
+  if (changes[ENABLED_KEY]) {
+    if (changes[ENABLED_KEY].newValue) {
       startHearts();
     } else {
       stopHearts();
@@ -147,13 +138,14 @@ chrome.storage.onChanged.addListener((changes) => {
     }
   }
 
-  // 频率
+  // 全局频率 & 密度
+  let needRestart = false;
+
   if (changes.frequency) {
     applyFrequency(changes.frequency.newValue);
     needRestart = true;
   }
 
-  // 密度
   if (changes.density) {
     applyDensity(changes.density.newValue);
     needRestart = true;
