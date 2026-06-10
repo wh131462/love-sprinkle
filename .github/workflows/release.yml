@@ -30,31 +30,11 @@ jobs:
             echo "Skipped: commit message does not match 'feat: v*'"
           fi
 
-      - name: Generate extension key
-        if: steps.check.outputs.should_run == 'true'
-        run: openssl genrsa -out /tmp/key.pem 2048
-
       - name: Package ZIP
         if: steps.check.outputs.should_run == 'true'
         run: |
           zip -r love-sprinkle.zip . \
             -x ".git/*" ".github/*" "scripts/gen_icons.py"
-
-      - name: Package CRX
-        if: steps.check.outputs.should_run == 'true'
-        run: |
-          xvfb-run google-chrome \
-            --pack-extension="${PWD}" \
-            --pack-extension-key=/tmp/key.pem \
-            --no-message-box
-          # Chrome outputs .crx to parent dir, named after the extension dir
-          CRX_PATH="$(dirname "${PWD}")/$(basename "${PWD}").crx"
-          if [ -f "$CRX_PATH" ]; then
-            mv "$CRX_PATH" ./love-sprinkle.crx
-            echo "CRX created: $(ls -lh love-sprinkle.crx)"
-          else
-            echo "WARNING: CRX not found at $CRX_PATH, falling back to zip only"
-          fi
           ls -lh love-sprinkle.zip
 
       - name: Set version
@@ -82,10 +62,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.version }}
-          files: |
-            love-sprinkle.zip
-            love-sprinkle.crx
-          fail_on_unmatched_files: false
+          files: love-sprinkle.zip
           prerelease: false
           generate_release_notes: true
         env:
